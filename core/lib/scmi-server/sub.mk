@@ -103,28 +103,13 @@ cppflags-lib-$(CFG_SCPFW_SENSOR_SIGNED_VALUE) += -DBUILD_HAS_SENSOR_SIGNED_VALUE
 cppflags-lib-$(CFG_SCPFW_INBAND_MSG_SUPPORT) += -DBUILD_HAS_INBAND_MSG_SUPPORT
 
 incdirs_ext-y += $(scpfw-path)/arch/none/optee/include
-srcs-y += $(scpfw-path)/arch/none/optee/src/arch_interrupt.c
-srcs-y += $(scpfw-path)/arch/none/optee/src/arch_main.c
+srcs-y += $(wildcard $(scpfw-path)/arch/none/optee/src/*.c)
 
 incdirs_ext-y += $(scpfw-path)/framework/include
-srcs-y += $(scpfw-path)/framework/src/fwk_arch.c
-srcs-y += $(scpfw-path)/framework/src/fwk_dlist.c
-srcs-y += $(scpfw-path)/framework/src/fwk_id.c
-srcs-y += $(scpfw-path)/framework/src/fwk_interrupt.c
-srcs-y += $(scpfw-path)/framework/src/fwk_io.c
-srcs-y += $(scpfw-path)/framework/src/fwk_log.c
-srcs-y += $(scpfw-path)/framework/src/fwk_mm.c
-srcs-y += $(scpfw-path)/framework/src/fwk_module.c
-srcs-y += $(scpfw-path)/framework/src/fwk_ring.c
-srcs-y += $(scpfw-path)/framework/src/fwk_slist.c
-srcs-y += $(scpfw-path)/framework/src/fwk_status.c
-srcs-y += $(scpfw-path)/framework/src/fwk_string.c
-srcs-y += $(scpfw-path)/framework/src/fwk_delayed_resp.c
-srcs-y += $(scpfw-path)/framework/src/fwk_time.c
-srcs-y += $(scpfw-path)/framework/src/fwk_core.c
-srcs-y += $(scpfw-path)/framework/src/assert.c
-srcs-y += $(scpfw-path)/framework/src/stdlib.c
-srcs-$(CFG_SCPFW_NOTIFICATION) += $(scpfw-path)/framework/src/fwk_notification.c
+srcs-y += $(wildcard $(scpfw-path)/framework/src/*.c)
+ifneq ($(CFG_SCPFW_NOTIFICATION),y)
+srcs-y := $(filter-out %/fwk_notification.c, ${srcs-y})
+endif
 
 # Helper macros for listing SCP-firmware modules source files (in srcs-y)
 # and header include paths (in incdirs_ext-y). Each module provides a C source
@@ -150,20 +135,19 @@ define scpfw-embed-mod
 ifneq (,$$(wildcard $(scpfw-path)/$3/$2/include/*))
 incdirs_ext-y += $(scpfw-path)/$3/$2/include
 endif
-srcs-$(CFG_SCPFW_MOD_$4) += $(scpfw-path)/$3/$2/src/mod_$1.c
 
 # SCMI_Perf in SCP-firmware has components that can be added conditionally at
 # build time.
-ifeq ($(1), scmi_perf)
-
+ifneq ($(1),scmi_perf)
+srcs-$(CFG_SCPFW_MOD_$4) += $(wildcard $(scpfw-path)/$3/$2/src/*.c)
+else
+srcs-$(CFG_SCPFW_MOD_$4) += $(scpfw-path)/$3/$2/src/mod_$1.c
 ifeq ($(CFG_SCPFW_SCMI_PERF_PROTOCOL_OPS),y)
 srcs-$(CFG_SCPFW_MOD_SCMI_PERF) += $(scpfw-path)/$3/$2/src/scmi_perf_protocol_ops.c
 endif
-
 ifeq ($(CFG_SCPFW_SCMI_PERF_FAST_CHANNELS),y)
 srcs-$(CFG_SCPFW_MOD_SCMI_PERF) += $(scpfw-path)/$3/$2/src/scmi_perf_fastchannels.c
 endif
-
 endif
 
 cflags-lib-$(CFG_SCPFW_MOD_$4) += -DBUILD_HAS_MOD_$4
@@ -207,12 +191,6 @@ $(eval $(call scpfw-embed-optee-module,console))
 $(eval $(call scpfw-embed-optee-module,mbx))
 $(eval $(call scpfw-embed-optee-module,reset))
 $(eval $(call scpfw-embed-optee-module,smt))
-
-srcs-$(CFG_SCPFW_MOD_CLOCK) += $(scpfw-path)/module/clock/src/clock_tree_management.c
-srcs-$(CFG_SCPFW_MOD_POWER_DOMAIN) += $(scpfw-path)/module/power_domain/src/power_domain_utils.c
-srcs-$(CFG_SCPFW_MOD_SCMI) += $(scpfw-path)/module/scmi/src/mod_scmi_base.c
-srcs-$(CFG_SCPFW_MOD_SCMI_SENSOR) += $(scpfw-path)/module/scmi_sensor/src/mod_scmi_ext_attrib.c
-srcs-$(CFG_SCPFW_MOD_SENSOR) += $(scpfw-path)/module/sensor/src/sensor_extended.c
 
 # Architecture arch/none/optee requires optee mbx header file
 incdirs_ext-y += $(scpfw-path)/module/optee/mbx/include
