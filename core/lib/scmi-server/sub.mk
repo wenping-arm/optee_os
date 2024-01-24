@@ -154,6 +154,11 @@ srcs-$(CFG_SCPFW_MOD_$4) += $(scpfw-path)/$3/$2/src/mod_$1.c
 
 # SCMI_Perf in SCP-firmware has components that can be added conditionally at
 # build time.
+ifeq ($(1), power_domain)
+srcs-$(CFG_SCPFW_MOD_POWER_DOMAIN) += $(scpfw-path)/$3/$2/src/power_domain_state_checks.c
+srcs-$(CFG_SCPFW_MOD_POWER_DOMAIN) += $(scpfw-path)/$3/$2/src/power_domain_notifications.c
+endif
+
 ifeq ($(1), scmi_perf)
 
 ifeq ($(CFG_SCPFW_SCMI_PERF_PROTOCOL_OPS),y)
